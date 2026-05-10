@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Calorie Counter{% endblock %}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <style>
+      :root {
+        --primary-color: #3b82f6;
+        --secondary-color: #10b981;
+        --danger-color: #ef4444;
+        --warning-color: #f59e0b;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      .gradient-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+
+      .card-shadow {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .food-item {
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .food-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .calorie-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 12px;
+      }
+
+      .calorie-low {
+        background-color: #d1fae5;
+        color: #065f46;
+      }
+
+      .calorie-medium {
+        background-color: #fef3c7;
+        color: #92400e;
+      }
+
+      .calorie-high {
+        background-color: #fee2e2;
+        color: #7f1d1d;
+      }
+
+      .button-primary {
+        background-color: #3b82f6;
+        transition: background-color 0.3s ease;
+      }
+
+      .button-primary:hover {
+        background-color: #2563eb;
+      }
+
+      .button-danger {
+        background-color: #ef4444;
+        transition: background-color 0.3s ease;
+      }
+
+      .button-danger:hover {
+        background-color: #dc2626;
+      }
+
+      .success-message {
+        animation: slideDown 0.3s ease-out;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body class="bg-gray-50">
+    <nav class="gradient-header text-white shadow-lg">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-apple-alt text-2xl"></i>
+            <h1 class="text-2xl font-bold">Calorie Counter</h1>
+          </div>
+          <ul class="flex space-x-6">
+            <li>
+              <a
+                href="{% url 'calorie_tracker:index' %}"
+                class="hover:opacity-80 transition"
+                >Home</a
+              >
+            </li>
+            <li>
+              <a
+                href="{% url 'calorie_tracker:history' %}"
+                class="hover:opacity-80 transition"
+                >History</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    {% if messages %}
+    <div class="container mx-auto px-4 mt-4">
+      {% for message in messages %}
+      <div
+        class="success-message p-4 rounded-lg mb-4 {% if message.tags %}{{ message.tags }}{% endif %}"
+        role="alert"
+      >
+        <button
+          class="float-right text-xl leading-none hover:text-gray-700"
+          onclick="this.parentElement.style.display = 'none'"
+        >
+          &times;
+        </button>
+        {% if message.tags == 'error' %}
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        {% elif message.tags == 'warning' %}
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        {% else %}
+        <i class="fas fa-check-circle mr-2"></i>
+        {% endif %} {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    <style>
+      .success {
+        @apply bg-green-100 text-green-800;
+      }
+      .error {
+        @apply bg-red-100 text-red-800;
+      }
+      .warning {
+        @apply bg-yellow-100 text-yellow-800;
+      }
+      .info {
+        @apply bg-blue-100 text-blue-800;
+      }
+    </style>
+    {% endif %}
+
+    <main class="container mx-auto px-4 py-8">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12 py-8">
+      <div class="container mx-auto px-4 text-center">
+        <p>&copy; 2024 Calorie Counter. Built with Django and Tailwind CSS.</p>
+        <p class="text-gray-400 text-sm mt-2">
+          Track your daily calorie intake with ease.
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const messages = document.querySelectorAll('[role="alert"]');
+        messages.forEach((msg) => {
+          setTimeout(() => {
+            msg.style.opacity = "0";
+            setTimeout(() => (msg.style.display = "none"), 300);
+          }, 5000);
+        });
+      });
+
+      function confirmDelete(itemName) {
+        return confirm('Are you sure you want to delete "' + itemName + '"?');
+      }
+
+      function confirmReset() {
+        return confirm(
+          "Are you sure you want to reset today's calorie count? This action cannot be undone.",
+        );
+      }
+    </script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

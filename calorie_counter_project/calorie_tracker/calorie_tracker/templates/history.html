@@ -1,0 +1,137 @@
+{% extends 'base.html' %} {% block title %}History - Calorie Counter{% endblock
+%} {% block content %}
+<div class="max-w-4xl mx-auto">
+  <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+    <h2 class="text-3xl font-bold text-gray-800 mb-2">
+      <i class="fas fa-history text-blue-600 mr-2"></i>Calorie History
+    </h2>
+    <p class="text-gray-600">View and manage your past food items</p>
+  </div>
+
+  <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+    <form method="GET" class="flex gap-4 items-end">
+      <div class="flex-1">
+        <label
+          for="id_date"
+          class="block text-sm font-medium text-gray-700 mb-2"
+        >
+          <i class="fas fa-calendar mr-2"></i>Select Date
+        </label>
+        {{ form.date }}
+      </div>
+      <button
+        type="submit"
+        class="button-primary text-white font-bold py-2 px-6 rounded-lg hover:shadow-lg transition"
+      >
+        <i class="fas fa-search mr-2"></i>Filter
+      </button>
+    </form>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div
+      class="bg-blue-50 border-l-4 border-blue-500 rounded-lg card-shadow p-4"
+    >
+      <p class="text-gray-600 text-sm font-medium">Selected Date</p>
+      <p class="text-2xl font-bold text-blue-600">
+        {{ selected_date|date:"M d, Y" }}
+      </p>
+    </div>
+    <div
+      class="bg-green-50 border-l-4 border-green-500 rounded-lg card-shadow p-4"
+    >
+      <p class="text-gray-600 text-sm font-medium">Total Calories</p>
+      <p class="text-2xl font-bold text-green-600">{{ total_calories }}</p>
+    </div>
+    <div
+      class="bg-purple-50 border-l-4 border-purple-500 rounded-lg card-shadow p-4"
+    >
+      <p class="text-gray-600 text-sm font-medium">Items Added</p>
+      <p class="text-2xl font-bold text-purple-600">{{ items.count }}</p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg card-shadow overflow-hidden">
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6">
+      <h3 class="text-xl font-bold">
+        <i class="fas fa-list mr-2"></i>Food Items for {{ selected_date|date:"l,
+        F d" }}
+      </h3>
+    </div>
+
+    <div class="p-6">
+      {% if items %}
+      <div class="space-y-3">
+        {% for item in items %}
+        <div
+          class="food-item bg-gray-50 rounded-lg p-4 border border-gray-200 flex justify-between items-center"
+        >
+          <div class="flex-1">
+            <h4 class="font-semibold text-gray-800">{{ item.name }}</h4>
+            <p class="text-sm text-gray-500">
+              <i class="fas fa-clock mr-1"></i>{{ item.created_at|time:"g:i A"
+              }}
+            </p>
+          </div>
+
+          <div class="flex items-center space-x-4">
+            {% if item.calories < 200 %}
+            <span class="calorie-badge calorie-low"
+              >{{ item.calories }} cal</span
+            >
+            {% elif item.calories < 500 %}
+            <span class="calorie-badge calorie-medium"
+              >{{ item.calories }} cal</span
+            >
+            {% else %}
+            <span class="calorie-badge calorie-high"
+              >{{ item.calories }} cal</span
+            >
+            {% endif %}
+
+            <form
+              method="POST"
+              action="{% url 'calorie_tracker:delete_food' item.id %}"
+              style="display: inline"
+            >
+              {% csrf_token %}
+              <button
+                type="submit"
+                class="text-red-500 hover:text-red-700 transition"
+                onclick="return confirmDelete('{{ item.name }}');"
+                title="Delete this item"
+              >
+                <i class="fas fa-trash-alt text-lg"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-center py-12">
+        <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+        <p class="text-gray-500 text-lg">
+          No food items found for {{ selected_date|date:"F d, Y" }}.
+        </p>
+        <a
+          href="{% url 'calorie_tracker:index' %}"
+          class="text-blue-600 hover:text-blue-800 mt-4 inline-block"
+        >
+          <i class="fas fa-arrow-left mr-2"></i>Back to Today
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mt-6">
+    <a
+      href="{% url 'calorie_tracker:index' %}"
+      class="inline-flex items-center text-blue-600 hover:text-blue-800"
+    >
+      <i class="fas fa-arrow-left mr-2"></i>Back to Today
+    </a>
+  </div>
+</div>
+{% endblock %}

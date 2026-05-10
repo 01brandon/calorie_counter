@@ -1,0 +1,285 @@
+{% extends 'base.html' %} {% load filters %} {% block title %}Home - Calorie
+Counter{% endblock %} {% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+{% endblock %} {% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div class="lg:col-span-2">
+    <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">Today's Intake</h2>
+          <p class="text-gray-500">{{ today|date:"l, F d, Y" }}</p>
+        </div>
+        <div class="text-right">
+          <div class="text-5xl font-bold text-blue-600">
+            {{ total_calories }}
+          </div>
+          <p class="text-gray-600 text-sm">Calories Consumed</p>
+        </div>
+      </div>
+
+      <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+        <p class="text-sm text-blue-800">
+          <strong>Goal:</strong> A typical diet contains 2000 calories per day.
+          {% if total_calories >= 2000 %} You've reached or exceeded your daily
+          goal! {% else %}
+          <strong
+            >{{ 2000|add:total_calories|stringformat:"-d" }} calories</strong
+          >
+          remaining today. {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">
+        <i class="fas fa-plus-circle text-blue-600 mr-2"></i>Add New Food Item
+      </h3>
+
+      <form
+        method="POST"
+        action="{% url 'calorie_tracker:add_food' %}"
+        class="space-y-4"
+      >
+        {% csrf_token %}
+
+        <div>
+          <label
+            for="{{ form.name.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Food Item Name
+          </label>
+          {{ form.name }} {% if form.name.errors %}
+          <p class="text-red-500 text-sm mt-1">
+            <i class="fas fa-exclamation-circle"></i> {{ form.name.errors.0 }}
+          </p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label
+            for="{{ form.calories.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Calories
+          </label>
+          {{ form.calories }} {% if form.calories.errors %}
+          <p class="text-red-500 text-sm mt-1">
+            <i class="fas fa-exclamation-circle"></i> {{ form.calories.errors.0
+            }}
+          </p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label
+            for="{{ form.date_added.id_for_label }}"
+            class="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Date
+          </label>
+          {{ form.date_added }} {% if form.date_added.errors %}
+          <p class="text-red-500 text-sm mt-1">
+            <i class="fas fa-exclamation-circle"></i> {{
+            form.date_added.errors.0 }}
+          </p>
+          {% endif %}
+        </div>
+
+        <button
+          type="submit"
+          class="w-full button-primary text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center hover:shadow-lg transition"
+        >
+          <i class="fas fa-check-circle mr-2"></i>Add Food Item
+        </button>
+      </form>
+    </div>
+
+    <div class="bg-white rounded-lg card-shadow overflow-hidden">
+      <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6">
+        <h3 class="text-xl font-bold">
+          <i class="fas fa-list mr-2"></i>Food Items ({{ today_items.count }})
+        </h3>
+      </div>
+
+      <div class="p-6">
+        {% if today_items %}
+        <div class="space-y-3">
+          {% for item in today_items %}
+          <div
+            class="food-item bg-gray-50 rounded-lg p-4 border border-gray-200 flex justify-between items-center"
+          >
+            <div class="flex-1">
+              <h4 class="font-semibold text-gray-800">{{ item.name }}</h4>
+              <p class="text-sm text-gray-500">
+                Added at {{ item.created_at|time:"g:i A" }}
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-4">
+              {% if item.calories < 200 %}
+              <span class="calorie-badge calorie-low"
+                >{{ item.calories }} cal</span
+              >
+              {% elif item.calories < 500 %}
+              <span class="calorie-badge calorie-medium"
+                >{{ item.calories }} cal</span
+              >
+              {% else %}
+              <span class="calorie-badge calorie-high"
+                >{{ item.calories }} cal</span
+              >
+              {% endif %}
+
+              <form
+                method="POST"
+                action="{% url 'calorie_tracker:delete_food' item.id %}"
+                style="display: inline"
+              >
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="text-red-500 hover:text-red-700 transition"
+                  onclick="return confirmDelete('{{ item.name }}');"
+                  title="Delete this item"
+                >
+                  <i class="fas fa-trash-alt text-lg"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <form
+            method="POST"
+            action="{% url 'calorie_tracker:reset_daily' %}"
+            style="display: inline"
+          >
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="w-full button-danger text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center hover:shadow-lg transition"
+              onclick="return confirmReset();"
+            >
+              <i class="fas fa-redo mr-2"></i>Reset Today's Count
+            </button>
+          </form>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+          <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+          <p class="text-gray-500 text-lg">No food items added today yet.</p>
+          <p class="text-gray-400 text-sm">
+            Add your first food item to get started!
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="lg:col-span-1">
+    <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+      <h3 class="text-lg font-bold text-gray-800 mb-4">
+        <i class="fas fa-chart-line text-blue-600 mr-2"></i>Last 7 Days
+      </h3>
+      <canvas id="calorieChart"></canvas>
+    </div>
+
+    <div class="space-y-4">
+      <div
+        class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg card-shadow p-6"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-semibold">Daily Goal</h4>
+          <i class="fas fa-bullseye text-2xl opacity-50"></i>
+        </div>
+        <p class="text-3xl font-bold">2000</p>
+        <p class="text-blue-100 text-sm">Recommended calories</p>
+      </div>
+
+      <div
+        class="bg-gradient-to-br {% if total_calories > 2000 %}from-red-500 to-red-600{% else %}from-green-500 to-green-600{% endif %} text-white rounded-lg card-shadow p-6"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-semibold">Remaining</h4>
+          <i class="fas fa-fire text-2xl opacity-50"></i>
+        </div>
+        <p class="text-3xl font-bold">
+          {{ 2000|add:total_calories|stringformat:"-d" }}
+        </p>
+        <p class="text-opacity-90 text-sm">
+          {% if total_calories > 2000 %} Over goal {% else %} Calories left
+          today {% endif %}
+        </p>
+      </div>
+
+      <div
+        class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg card-shadow p-6"
+      >
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="font-semibold">Progress</h4>
+          <i class="fas fa-percent text-2xl opacity-50"></i>
+        </div>
+        {% if total_calories > 0 %}
+        <p class="text-3xl font-bold">{{ total_calories|mul:100|div:2000 }}%</p>
+        {% else %}
+        <p class="text-3xl font-bold">0%</p>
+        {% endif %}
+        <div
+          class="mt-3 bg-white bg-opacity-30 rounded-full h-2 overflow-hidden"
+        >
+          <div
+            class="bg-white h-full rounded-full"
+            style="width: {% if total_calories >= 2000 %}100{% elif total_calories == 0 %}0{% else %}{{ total_calories|mul:100|div:2000 }}{% endif %}%"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const dailyData = {{ daily_data|safe }};
+  const dates = dailyData.map(d => d.date);
+  const totals = dailyData.map(d => d.total);
+
+  const ctx = document.getElementById('calorieChart').getContext('2d');
+  const chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+          labels: dates,
+          datasets: [{
+              label: 'Calories',
+              data: totals,
+              backgroundColor: 'rgba(59, 130, 246, 0.7)',
+              borderColor: 'rgba(59, 130, 246, 1)',
+              borderWidth: 2,
+              borderRadius: 5,
+              fill: true,
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+              legend: {
+                  display: false,
+              }
+          },
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  ticks: {
+                      stepSize: 500,
+                  }
+              }
+          }
+      }
+  });
+</script>
+
+{% endblock %}
