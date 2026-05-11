@@ -52,7 +52,7 @@ def add_food(request):
             request,
             f"{form.cleaned_data['name']} ({form.cleaned_data['calories']} cal) added successfully!"
         )
-        return redirect('index')
+        return redirect('calorie_tracker:index')
     else:
         today = date.today()
         today_items = FoodItem.objects.filter(date_added=today).order_by('-created_at')
@@ -93,8 +93,7 @@ def delete_food(request, item_id):
     item_name = food_item.name
     food_item.delete()
     messages.success(request, f"{item_name} removed from your list.")
-    return redirect('index')
-
+    return redirect('calorie_tracker:index')
 
 @require_http_methods(["POST"])
 def reset_daily(request):
@@ -103,7 +102,7 @@ def reset_daily(request):
     count = FoodItem.objects.filter(date_added=today).count()
     FoodItem.objects.filter(date_added=today).delete()
     messages.success(request, f"Reset complete! Removed {count} item(s) from today's list.")
-    return redirect('index')
+    return redirect('calorie_tracker:index')
 
 
 def food_detail(request, item_id):
